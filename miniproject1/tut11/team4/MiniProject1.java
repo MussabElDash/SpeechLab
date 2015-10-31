@@ -18,6 +18,7 @@ public class MiniProject1 extends JFrame {
 		setContentPane(Constants.mainPanel);
 		setLocationRelativeTo(null);
 		setVisible(true);
+		setTitle("German Spelling Game");
 	}
 
 }

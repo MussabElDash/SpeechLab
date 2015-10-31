@@ -10,6 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.Timer;
 
 import edu.cmu.sphinx.frontend.util.Microphone;
 import edu.cmu.sphinx.recognizer.Recognizer;
@@ -17,51 +18,74 @@ import edu.cmu.sphinx.result.Result;
 
 @SuppressWarnings("serial")
 public class Level2 extends JPanel {
-	private ColorProgressPanel progress = new ColorProgressPanel(20);
+	private ColorProgressPanel progress = new ColorProgressPanel(10);
 	GridBagConstraints c = new GridBagConstraints();
 	private JTextArea messageArea = new JTextArea();
 	private JLabel wordArea = new JLabel();
 	private JButton click = new JButton("Click to Talk");
 	private String word = "";
 	private JPanel container = new JPanel();
-	private JLabel currentScoreLabel = new JLabel();
+	private JLabel currentScoreLabel = new JLabel("Total Score: ");
+	private JLabel time = new JLabel("Time Passed:  " + 0 + " seconds");
 	private int totalScore = 0;
-	int cell = 0, trials = 3;
+	int cell = 0, trials, secs;
 
 	public Level2(Recognizer recognizer, Microphone microphone) {
 		container.setLayout(new BorderLayout());
 		wordArea.setHorizontalAlignment(JLabel.CENTER);
-		messageArea.setEditable(true);
-		if (!microphone.startRecording()) {
-            messageArea.setText("Cannot start microphone, please try again.");
-            recognizer.deallocate();
-        }
+		messageArea.setEditable(false);
+		newWord("Hello" + cell);
+		trials = 3;
+		secs = 0;
 		click.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Result result = recognizer.recognize();
-	            if (result != null) {
-	                String resultText = result.getBestFinalResultNoFiller();
-	                messageArea.setText(resultText);
-	                if (resultText.equals(word)) {
-	                	changeWordScoreBy(10);
-	                	newWord("Hello" + cell);
-	                	//newWord(generateWord());
-    					progress.changeToColor(cell++);
-    					trials = 3;
-	                }
-	                else {
-	                	trials --;
-	                	if (trials < 0) {
-	                		changeWordScoreBy(-1);
-	                	}
-	                }
-	            } else {
-	            	messageArea.setText("I can't hear what you said, please try again.");
-	            }
+				if (cell == 10) {
+                	newWord("CONGRATULATIONS! YOU HAVE FINISHED LEVEL 2!");
+                	click.setEnabled(false);
+                }
+				else {
+					microphone.clear();
+					microphone.startRecording();
+					wordArea.setText("");
+					Result result = recognizer.recognize();
+					microphone.stopRecording();
+		            if (result != null) {
+		                String resultText = result.getBestFinalResultNoFiller();
+		                String verdict = "";
+		                if (resultText.equals(word)) {
+		                	trials = 3;
+		                	changeWordScoreBy(10);
+	                		newWord("Hello" + cell);
+	                		progress.changeToColor(cell++);
+	                		verdict = "Correct Word";
+		                }
+		                else {
+		                	trials --;
+		                	if (trials < 0) {
+		                		changeWordScoreBy(-2);
+		                	}
+		                	verdict = "Wrong Word";
+		                }
+		                messageArea.setText(resultText + ": " + verdict);
+		                if (cell == 10) {
+                			newWord("CONGRATULATIONS!");
+                        	click.setEnabled(false);
+                		}
+		            } else {
+		            	messageArea.setText("I can't hear what you said, please try again.");
+		            }
+				}
 			}
 		});
+		ActionListener actionListener = new ActionListener() {
+	        public void actionPerformed(ActionEvent actionEvent) {
+	            time.setText("Time Passed: " + (++ secs) + " seconds");
+	        }
+	    };
+	    Timer timer = new Timer(1000, actionListener);
+	    timer.start();
 
 		GridBagLayout layout = new GridBagLayout();
 		setLayout(layout);
@@ -84,24 +108,27 @@ public class Level2 extends JPanel {
 		c.gridy = 1;
 		c.weightx = 1;
 		c.weighty = 0.5;
-		add(currentScoreLabel, c);
+		add(time, c);
 
 		c.gridy = 2;
+		add(currentScoreLabel, c);
+
+		c.gridy = 3;
 		c.weightx = 3;
 		c.weighty = 1;
 		add(messageArea, c);
 
-		c.gridy = 3;
+		c.gridy = 4;
 		c.weighty = 1;
 		add(wordArea, c);
 
-		c.gridy = 4;
+		c.gridy = 5;
 		c.gridwidth = GridBagConstraints.RELATIVE;
 		c.weightx = 1;
 		c.weighty = 0.3;
 		add(click, c);
 
-		c.gridy = 5;
+		c.gridy = 6;
 		c.weightx = 1;
 		c.weighty = 0.01;
 		add(container, c);
@@ -110,6 +137,7 @@ public class Level2 extends JPanel {
 	public void newWord(String s) {
 		word = s;
 		wordArea.setText(word);
+		currentScoreLabel.setText("Total Score: " + totalScore);
 	}
 
 	public void changeWordScoreBy(int x) {

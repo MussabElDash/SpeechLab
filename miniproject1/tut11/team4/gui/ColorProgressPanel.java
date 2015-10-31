@@ -7,10 +7,11 @@ import javax.swing.JPanel;
 
 @SuppressWarnings("serial")
 public class ColorProgressPanel extends JPanel {
-	ColoredLabel[] buttons = new ColoredLabel[20];
+	ColoredLabel[] buttons;
 
 	public ColorProgressPanel(int size) {
 		setLayout(new GridLayout(1, size));
+		buttons = new ColoredLabel[size];
 		for (int i = 0; i < buttons.length; i++) {
 			switch (i / 5) {
 			case 0:
